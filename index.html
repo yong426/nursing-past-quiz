@@ -106,6 +106,25 @@ h1{font-size:1.25rem;margin:8px 0 2px}
 .expl{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--acc);
   border-radius:10px;padding:13px 14px;font-size:.92rem;margin-top:10px}
 .expl b.tp{display:block;margin-bottom:4px}
+/* 빨간펜 해설: 정답 근거 한 줄 + 보기별 '틀린 문구 → 고친 문구' */
+.ex-row{display:flex;gap:10px;align-items:flex-start;margin-top:10px}
+.ex-lbl{flex:none;font-size:.72rem;font-weight:800;border-radius:6px;padding:2px 7px;margin-top:2px;white-space:nowrap}
+.ex-lbl.ok{background:var(--ok-bg);color:var(--ok)}
+.ex-lbl.bad{background:var(--bad-bg);color:var(--bad)}
+.ex-why{flex:1;line-height:1.55}
+.ex-fixes{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0}
+/* 보기 하나 = 두 줄: (번호) 틀린 문구 / → 고친 문구 */
+.fix{display:grid;grid-template-columns:1.5em 1fr;column-gap:4px;line-height:1.45}
+.fix-o{grid-row:1 / span 2;color:var(--bad);font-weight:800}
+.fix-w{grid-column:2;color:var(--bad);text-decoration:line-through;text-decoration-thickness:1.5px;text-decoration-color:rgba(217,58,58,.7)}
+.fix-rl{grid-column:2}
+.fix-arrow{color:var(--sub);font-size:.8rem;margin-right:4px}
+.fix-r{color:var(--ok);font-weight:650}
+@media (max-width:520px){
+  .ex-row{flex-direction:column;gap:5px}
+  .ex-lbl{align-self:flex-start}
+}
+.ex-tip{margin-top:10px;padding-top:8px;border-top:1px dashed var(--line);color:var(--sub);font-size:.85rem}
 /* results */
 .score{font-size:2.2rem;font-weight:800;text-align:center;margin:6px 0}
 .score small{font-size:1rem;color:var(--sub);font-weight:600}
@@ -149,7 +168,7 @@ h1{font-size:1.25rem;margin:8px 0 2px}
 const $ = sel => document.querySelector(sel);
 const app = $("#app");
 const CIRCLED = ["①","②","③","④","⑤"];
-const APP_VERSION = "2026.09.05.2";
+const APP_VERSION = "2026.09.05.3";
 const LS_WRONG = "npq_wrong_v1";
 const LS_STAR  = "npq_star_v1";    // 별표(잘 몰라서 찍은 문제) — 오답과 별개로 보관
 const LS_PREF  = "npq_pref_v1";
@@ -643,6 +662,22 @@ function answer(pick){
   $("#nextBtn").focus();
 }
 
+/* 해설 카드 — "빨간펜" 형식.
+   q.why: 정답 근거 / q.fx: [[보기번호, 틀린 문구, 고친 문구], ...] / q.neg: '옳지 않은 것' 문제(정답 보기 하나만 교정)
+   q.tip: 선택 메모. 구형 데이터(q.exp 문자열만 있는 경우)는 문장 그대로 보여 준다. */
+function explHtml(q){
+  const head = `<span class="era-tag">${esc(q.subj)}</span> <b class="tp" style="display:inline">${esc(q.topic)}</b>`;
+  if(!q.why) return `<div class="expl">${head}<div style="margin-top:7px">${esc(q.exp||"")}</div></div>`;
+  const fx = (q.fx||[]);
+  return `<div class="expl">${head}
+    <div class="ex-row"><span class="ex-lbl ok">정답 ${CIRCLED[q.ans-1]}</span><div class="ex-why">${esc(q.why)}</div></div>
+    ${fx.length ? `<div class="ex-row"><span class="ex-lbl bad">${q.neg?"틀린 보기":"오답 교정"}</span>
+      <div class="ex-fixes">${fx.map(([o,w,r])=>`<div class="fix"><span class="fix-o">${CIRCLED[o-1]}</span>
+        <span class="fix-w">${esc(w)}</span><span class="fix-rl"><span class="fix-arrow">→</span><span class="fix-r">${esc(r)}</span></span></div>`).join("")}</div></div>` : ""}
+    ${q.tip ? `<div class="ex-tip">💡 ${esc(q.tip)}</div>` : ""}
+  </div>`;
+}
+
 /* 채점 결과 표시 — 답한 직후와 이전 문항으로 되돌아왔을 때 같은 함수로 그린다 */
 function showFeedback(q, a){
   const {pick, ok} = a;
@@ -655,10 +690,7 @@ function showFeedback(q, a){
   const last = quiz.idx === quiz.list.length-1;
   $("#feedback").innerHTML = `
     <div class="verdict ${ok?"ok":"bad"}">${ok?"⭕ 정답입니다!":"❌ 오답입니다. 정답은 "+CIRCLED[q.ans-1]}</div>
-    <div class="expl">
-      <span class="era-tag">${esc(q.subj)}</span> <b class="tp" style="display:inline">${esc(q.topic)}</b>
-      <div style="margin-top:7px">${esc(q.exp)}</div>
-    </div>
+    ${explHtml(q)}
     <button class="btn" id="nextBtn" style="margin-top:14px">${last?"결과 보기":"다음 문제"}</button>`;
   $("#nextBtn").onclick = nextQ;
 }
@@ -738,10 +770,7 @@ function viewOne(id, backFn){
   </div>
   <div class="qimgbox"><img src="${imgPath(q)}" alt="문제"></div>
   <div class="verdict ok" style="margin-top:12px">정답: ${CIRCLED[q.ans-1]}</div>
-  <div class="expl">
-    <span class="era-tag">${esc(q.subj)}</span> <b class="tp" style="display:inline">${esc(q.topic)}</b>
-    <div style="margin-top:7px">${esc(q.exp)}</div>
-  </div>`;
+  ${explHtml(q)}`;
   $("#backBtn").onclick = backFn;
   $("#starBtn").onclick = ()=>{
     const on = toggleStar(q.id);

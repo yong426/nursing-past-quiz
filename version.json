@@ -1,5 +1,5 @@
 {
   "data": "900",
   "note": "index.html의 APP_VERSION과 app 값을 항상 같이 올린다. data.js를 바꾸면 data 값도 함께 올린다.",
-  "app": "2026.09.05.2"
+  "app": "2026.09.05.3"
 }

@@ -15,7 +15,9 @@ def main():
     for r in rounds:
         imgs = {int(os.path.splitext(os.path.basename(p))[0]) for p in glob.glob(os.path.join(ROOT, "img", r, "*.webp"))}
         ap = os.path.join(ROOT, "tools", "answers", f"{r}.json")
-        ep = os.path.join(ROOT, "tools", "exp", f"{r}.json")
+        ep = os.path.join(ROOT, "tools", "exp2", f"{r}.json")          # v2(빨간펜 구조) 우선
+        if not os.path.exists(ep):
+            ep = os.path.join(ROOT, "tools", "exp", f"{r}.json")
         if not (os.path.exists(ap) and os.path.exists(ep)):
             print(f"! {r}: 정답({os.path.exists(ap)})/해설({os.path.exists(ep)}) 없음 → 제외"); continue
         ans = {int(k): v for k, v in json.load(open(ap, encoding="utf-8")).items()}
@@ -24,14 +26,30 @@ def main():
         if missing:
             print(f"! {r}: 누락 {missing[:10]}{'…' if len(missing) > 10 else ''} → 제외"); continue
         flags = [(n, exp[n]["flag"]) for n in range(1, 101) if exp[n].get("flag")]
+        v2 = "exp2" in ep
+        def fixes_ok(n):
+            e = exp[n]; fx = e.get("fixes", [])
+            if not isinstance(fx, list): return False
+            for f in fx:
+                if not (isinstance(f.get("o"), int) and 1 <= f["o"] <= 5 and f.get("wrong") and f.get("right")): return False
+            if any(f["o"] == ans[n]["ans"] for f in fx) and not e.get("neg"): return False
+            return bool(e.get("why")) and (fx or e.get("flag"))
         bad = [n for n in range(1, 101) if not (1 <= ans[n]["ans"] <= 5) or ans[n]["subj"] not in SUBJECTS
-               or not exp[n].get("topic") or len(exp[n].get("exp", "")) < 60]
+               or not exp[n].get("topic") or (not fixes_ok(n) if v2 else len(exp[n].get("exp", "")) < 60)]
         if bad:
             print(f"! {r}: 형식 이상 문항 {bad} → 제외"); continue
         for n in range(1, 101):
-            qs.append(dict(id=f"{r}-{n}", r=r, n=n, subj=ans[n]["subj"], topic=exp[n]["topic"].strip(),
-                           exp=re.sub(r"\s+", " ", exp[n]["exp"]).strip(), ans=ans[n]["ans"]))
-        print(f"{r}: 100문항 OK" + (f"  flag {len(flags)}건: {flags}" if flags else ""))
+            e = exp[n]
+            q = dict(id=f"{r}-{n}", r=r, n=n, subj=ans[n]["subj"], topic=e["topic"].strip(), ans=ans[n]["ans"])
+            if v2:
+                q["why"] = re.sub(r"\s+", " ", e["why"]).strip()
+                q["fx"] = [[f["o"], f["wrong"].strip(), f["right"].strip()] for f in sorted(e.get("fixes", []), key=lambda f: f["o"])]
+                if e.get("neg"): q["neg"] = 1
+                if e.get("tip"): q["tip"] = e["tip"].strip()
+            else:
+                q["exp"] = re.sub(r"\s+", " ", e["exp"]).strip()
+            qs.append(q)
+        print(f"{r}: 100문항 OK ({'v2' if v2 else 'v1'})" + (f"  flag {len(flags)}건: {flags}" if flags else ""))
     data = dict(subjects=SUBJECTS, questions=qs)
     with open(os.path.join(ROOT, "data.js"), "w", encoding="utf-8") as f:
         f.write("window.QUIZ_DATA = " + json.dumps(data, ensure_ascii=False, separators=(",", ":")) + ";\n")
