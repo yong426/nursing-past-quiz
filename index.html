@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>간호조무사 기출 풀기</title>
+<!-- 아이패드/아이폰 Safari '홈 화면에 추가'(웹클립) 지원 — 전체화면 단독 앱으로 뜬다.
+     웹클립 저장소는 Safari의 7일 미사용 삭제(ITP) 대상에서 제외라 학습 기록 보존에도 유리. -->
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="간호조무사 기출">
+<meta name="description" content="간호조무사 국가시험 기출문제 회차·번호순 출제 · 채점 · 해설 · 오답노트">
+<style>
+:root{
+  --bg:#f4f5f7; --card:#ffffff; --ink:#1c2330; --sub:#68707f; --line:#e3e6eb;
+  /* 색은 역할로 고정한다 — 화면마다 다른 색을 쓰지 않는다.
+     acc(밝은 파랑) = 실행·긍정: 주 버튼, 선택한 칩, 정답, 해설
+     acc2(남색)     = 구조·이동: 활성 탭, 소제목, 표 머리, 세그먼트
+     star(금색)     = 별표 전용 */
+  --acc:#2f6fed;  --acc-soft:#e8effd;  --acc-ink:#ffffff;
+  --acc2:#1f3a68; --acc2-soft:#e9edf5;
+  --star:#e8a23d; --star-soft:#fff8ec; --star-ink:#5c3d0c;
+  --ok:#14934a; --ok-bg:#e7f6ec; --warn:#c47a17; --bad:#d93a3a; --bad-bg:#fdecec;
+  --chip:#eef1f5; --chip-on:#2f6fed; --shadow:0 1px 3px rgba(20,28,45,.08);
+  --r:14px;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+html{font-size:16px}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Pretendard","Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;
+  line-height:1.5; padding-bottom:env(safe-area-inset-bottom)}
+.wrap{max-width:720px;margin:0 auto;padding:16px 14px 48px}
+h1{font-size:1.25rem;margin:8px 0 2px}
+.sub{color:var(--sub);font-size:.85rem;margin:0 0 18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  box-shadow:var(--shadow);padding:16px;margin-bottom:14px}
+.card h2{font-size:.95rem;margin:0 0 10px;display:flex;justify-content:space-between;align-items:center}
+.card h3{font-size:.8rem;color:var(--acc2);margin:12px 0 6px;font-weight:700}
+/* 상단 탭 — 세 화면이 같은 머리글·같은 탭 줄을 쓰므로 탭을 옮겨도 화면이 밀리지 않는다 */
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 14px}
+.tabs button{border:1px solid var(--line);background:var(--card);color:var(--sub);
+  border-radius:12px;padding:12px 6px;font-size:.9rem;font-weight:700;cursor:pointer;
+  box-shadow:var(--shadow);transition:background .12s,color .12s,border-color .12s}
+.tabs button.on{background:var(--acc2);border-color:var(--acc2);color:#fff}
+/* 별표 버튼 (해설 단독 보기에서는 회차·번호 라벨 옆, 문제 화면에서는 보기 왼쪽) */
+.qmeta{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:0 0 8px}
+.starbtn{border:1px solid var(--line);background:var(--card);border-radius:10px;
+  padding:3px 11px;font-size:1.2rem;line-height:1.25;cursor:pointer;color:var(--sub);
+  flex-shrink:0;transition:color .12s,border-color .12s,background .12s}
+.starbtn.on{color:var(--star);border-color:var(--star);background:var(--star-soft)}
+/* 별표를 보기(①②③④) 왼쪽에 나란히 둔다 — 답을 고르는 손 위치에서 바로 누를 수 있다 */
+.answerrow{display:flex;align-items:stretch;gap:9px;margin:14px 0 6px}
+.answerrow .answers{flex:1;margin:0}
+.answerrow .starbtn{display:flex;align-items:center;justify-content:center;min-width:46px;padding:3px 8px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:var(--chip);color:var(--ink);
+  border-radius:999px;padding:7px 13px;font-size:.85rem;cursor:pointer;user-select:none;
+  transition:background .12s,color .12s,border-color .12s}
+.chip small{color:inherit;opacity:.65;font-size:.75em;margin-left:3px}
+.chip.on{background:var(--chip-on);border-color:var(--chip-on);color:#fff}
+.chip.all{font-weight:600}
+.seg{display:flex;gap:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content}
+.seg button{border:0;background:var(--card);padding:8px 16px;font-size:.9rem;cursor:pointer;color:var(--ink)}
+.seg button.on{background:var(--acc2);color:#fff}
+.seg button.on.star{background:var(--star);color:var(--star-ink)}
+.numin{width:74px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;
+  font-size:1rem;text-align:center;color:var(--ink);background:var(--card)}
+.numin:focus{outline:2px solid var(--acc);border-color:var(--acc)}
+.btn{display:block;width:100%;border:0;border-radius:var(--r);padding:15px;font-size:1.05rem;
+  font-weight:700;cursor:pointer;background:var(--acc);color:var(--acc-ink)}
+.btn.ghost{background:var(--card);color:var(--ink);border:1px solid var(--line);font-weight:600}
+.btn:disabled{opacity:.45;cursor:default}
+.btn + .btn{margin-top:10px}
+.rowbtns{display:flex;gap:10px}
+.rowbtns .btn{margin-top:0}
+.fold{color:var(--sub);font-size:.82rem;font-weight:500;cursor:pointer;background:none;border:none;padding:4px}
+.hint{color:var(--sub);font-size:.8rem;margin-top:10px}
+.badge{display:inline-block;background:var(--bad);color:#fff;border-radius:999px;
+  font-size:.75rem;padding:1px 8px;margin-left:6px;vertical-align:1px}
+/* quiz */
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px}
+.topbar .meta{font-size:.85rem;color:var(--sub)}
+.prog{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-bottom:14px}
+.prog i{display:block;height:100%;background:var(--acc);border-radius:3px;transition:width .25s}
+.qimgbox{background:#fff;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.qimgbox img{display:block;width:100%;height:auto}
+/* 가로모드: 문제 풀이 화면을 좌(문제지)/우(답·해설) 2단으로 — 채점 후 시선 이동 없이 해설 확인 */
+@media (orientation:landscape) and (min-width:760px){
+  .wrap:has(.qbody){max-width:1200px}
+  .qbody{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:18px;align-items:start}
+  .qside{position:sticky;top:12px}
+}
+.era-tag{display:inline-block;font-size:.75rem;color:var(--acc);background:var(--acc-soft);
+  border-radius:6px;padding:2px 8px;font-weight:600}
+.answers{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:14px 0 6px}
+.answers button{border:1.5px solid var(--line);background:var(--card);border-radius:12px;
+  padding:13px 0;font-size:1.1rem;font-weight:700;cursor:pointer;color:var(--ink);transition:all .1s}
+.answers button:not(:disabled):hover{border-color:var(--acc);color:var(--acc)}
+.answers button.sel-ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.answers button.sel-bad{background:var(--bad);border-color:var(--bad);color:#fff}
+.answers button.reveal{border-color:var(--ok);color:var(--ok);background:var(--ok-bg)}
+.verdict{display:flex;align-items:center;gap:8px;font-weight:800;font-size:1.05rem;margin:10px 0 6px}
+.verdict.ok{color:var(--ok)} .verdict.bad{color:var(--bad)}
+.expl{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--acc);
+  border-radius:10px;padding:13px 14px;font-size:.92rem;margin-top:10px}
+.expl b.tp{display:block;margin-bottom:4px}
+/* results */
+.score{font-size:2.2rem;font-weight:800;text-align:center;margin:6px 0}
+.score small{font-size:1rem;color:var(--sub);font-weight:600}
+.tbl{width:100%;border-collapse:collapse;font-size:.88rem}
+.tbl td,.tbl th{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left}
+.tbl th{color:var(--acc2);font-weight:700;font-size:.8rem}
+.tbl td.num{text-align:right}
+/* wrong note list */
+.witem{display:flex;align-items:center;gap:10px;padding:11px 2px;border-bottom:1px solid var(--line)}
+.witem:last-child{border-bottom:0}
+.witem .info{flex:1;min-width:0}
+.witem .t1{font-size:.92rem;font-weight:650}
+.witem .t2{font-size:.78rem;color:var(--sub)}
+.witem .acts{display:flex;gap:6px}
+.sm{border:1px solid var(--line);background:var(--card);border-radius:8px;
+  padding:6px 11px;font-size:.82rem;cursor:pointer;color:var(--ink)}
+.sm.primary{background:var(--acc);border-color:var(--acc);color:#fff}
+.sm.danger{color:var(--bad)}
+.empty{text-align:center;color:var(--sub);padding:34px 0;font-size:.9rem}
+.toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#222a38;color:#fff;
+  padding:10px 18px;border-radius:999px;font-size:.85rem;opacity:0;pointer-events:none;transition:opacity .25s;z-index:50}
+.toast.show{opacity:.94}
+.footer{color:var(--sub);font-size:.72rem;text-align:center;margin-top:26px;line-height:1.7}
+.footer a{color:var(--sub)}
+@media (max-width:480px){
+  .answers{gap:6px}
+  .answers button{padding:12px 0;font-size:1rem}
+  .answerrow{gap:8px}
+  .answerrow .starbtn{min-width:42px}
+}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<div class="toast" id="toast"></div>
+
+<script src="data.js"></script>
+<script>
+"use strict";
+/* ---------- state ---------- */
+const $ = sel => document.querySelector(sel);
+const app = $("#app");
+const CIRCLED = ["①","②","③","④","⑤"];
+const APP_VERSION = "2026.09.05.1";
+const LS_WRONG = "npq_wrong_v1";
+const LS_STAR  = "npq_star_v1";    // 별표(잘 몰라서 찍은 문제) — 오답과 별개로 보관
+const LS_PREF  = "npq_pref_v1";
+const LS_HIST  = "npq_hist_v1";   // quiz session history
+const LS_STAT  = "npq_stat_v1";   // per-question cumulative right/wrong
+const LS_RESUME = "npq_resume_v1";  // 중간 저장(진행 중 세션)
+const LS_RECENT = "npq_recent_v1";  // 풀어본 회차 기록 — 같은 문항이 연달아 나오지 않게
+/* 새 버전 감지 시 지워도 되는 키 (오답노트·별표·학습기록·풀어본 범위는 보존) */
+const VOLATILE_KEYS = [LS_PREF, LS_RESUME];
+
+const DATA = (window.QUIZ_DATA || {subjects:[], questions:[]});
+const ALL_ERAS = DATA.subjects;
+const ALL_ROUNDS = [...new Set(DATA.questions.map(q=>q.r))].sort();   // "2021-1" 문자열 순 = 시간 순
+/* 회차 id "2022-1" → "2022년 상반기" */
+function roundLabel(r){ const [y,h] = String(r).split("-"); return `${y}년 ${h==="1"?"상":"하"}반기`; }
+function roundShort(r){ const [y,h] = String(r).split("-"); return `${y.slice(2)}년 ${h==="1"?"상":"하"}`; }
+const QBYID = Object.fromEntries(DATA.questions.map(q=>[q.id,q]));
+
+let pref = load(LS_PREF, {eras: null, rounds: null, autoRemove: true,
+                          autoUnstar: false, range: null, homeTab: "practice"});
+let sel = {
+  eras: new Set(pref.eras || ALL_ERAS),
+  rounds: new Set(pref.rounds || ALL_ROUNDS),
+  range: Array.isArray(pref.range) && pref.range.length===2 ? pref.range.slice() : [1, 100]
+};
+let quiz = null;         // {list, idx, answers:[], fromNote, fromStar, seq}
+let noteView = "wrong";  // "wrong" = 오답노트, "star" = 별표
+let noteEra = "all";     // 복습 목록의 과목 필터
+
+function load(k, d){ try{ const v = JSON.parse(localStorage.getItem(k)); return v==null?d:v; }catch(e){ return d; } }
+function save(k, v){ localStorage.setItem(k, JSON.stringify(v)); }
+function savePref(){ save(LS_PREF, {eras:[...sel.eras], rounds:[...sel.rounds],
+  autoRemove:pref.autoRemove, autoUnstar:pref.autoUnstar, range:sel.range.slice(), homeTab:pref.homeTab}); }
+function wrongMap(){ return load(LS_WRONG, {}); }
+function setWrong(m){ save(LS_WRONG, m); }
+function addWrong(q, picked){
+  const m = wrongMap();
+  const e = m[q.id] || {c:0};
+  e.c++; e.t = Date.now(); e.p = picked;
+  m[q.id] = e; setWrong(m);
+}
+function removeWrong(id){ const m = wrongMap(); delete m[id]; setWrong(m); }
+/* ---------- 별표: 정답을 맞혀도 '잘 몰라서 찍었다'고 표시해 따로 모아 다시 푼다 ---------- */
+function starMap(){ return load(LS_STAR, {}); }
+function isStarred(id){ return !!starMap()[id]; }
+function toggleStar(id){
+  const m = starMap();
+  if(m[id]) delete m[id]; else m[id] = {t: Date.now()};
+  save(LS_STAR, m);
+  return !!m[id];
+}
+function unstar(id){ const m = starMap(); delete m[id]; save(LS_STAR, m); }
+function recordStat(q, ok){
+  const s = load(LS_STAT, {});
+  const e = s[q.id] || {r:0, w:0};
+  ok ? e.r++ : e.w++;
+  s[q.id] = e; save(LS_STAT, s);
+}
+function saveSession(entry){
+  const h = load(LS_HIST, []);
+  h.unshift(entry);
+  if(h.length > 100) h.length = 100;
+  save(LS_HIST, h);
+}
+function toast(msg){
+  const t = $("#toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(t._h); t._h = setTimeout(()=>t.classList.remove("show"), 1800);
+}
+/* 출제 순서는 항상 회차 → 문항번호 순 (2026-08-29 무작위에서 변경 — 시험지 흐름 그대로 풀기) */
+function byRoundAndNumber(a, b){ return (a.r < b.r ? -1 : a.r > b.r ? 1 : 0) || (a.n - b.n); }
+function esc(s){ return String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+function imgPath(q){ return `img/${q.r}/${String(q.n).padStart(2,"0")}.webp`; }
+
+/* ---------- pool ---------- */
+function rangeLoHi(){
+  const a = Math.max(1, Math.min(100, +sel.range[0] || 1));
+  const b = Math.max(1, Math.min(100, +sel.range[1] || 100));
+  return [Math.min(a,b), Math.max(a,b)];
+}
+function pool(){
+  const [lo, hi] = rangeLoHi();
+  return DATA.questions.filter(q => sel.eras.has(q.subj) && sel.rounds.has(q.r) && q.n >= lo && q.n <= hi);
+}
+
+/* ---------- 최근 출제 회피 (LRU) ----------
+   문항마다 '몇 번째 세션에 풀었는지'를 기록하고, 뽑을 때 오래전에 푼 문항·아직 안 풀어본 문항을
+   먼저 쓴다. 출제만 되고 답하지 않은 문항은 안 본 것으로 처리해 다시 나온다.
+   풀이 모자라면 막히지 않고 가장 오래전에 푼 문항부터 재사용한다. */
+let _recent = null;
+function recentLog(){
+  if(_recent) return _recent;
+  const r = load(LS_RECENT, null);
+  _recent = (r && r.m) ? r : {seq:0, m:{}};
+  return _recent;
+}
+function saveRecent(r){ _recent = r; save(LS_RECENT, r); }
+function newSessionSeq(){
+  const r = recentLog();
+  r.seq++;
+  Object.keys(r.m).forEach(id=>{ if(!QBYID[id]) delete r.m[id]; });   // 사라진 문항 정리
+  saveRecent(r);
+  return r.seq;
+}
+function markServedOne(id, seq){
+  const r = recentLog();
+  if(r.m[id] === seq) return;
+  r.m[id] = seq; saveRecent(r);
+}
+function servedCount(){ const m = recentLog().m; return Object.keys(m).filter(id=>QBYID[id]).length; }
+/* 1회성: 이 기능이 생기기 전에 이미 푼 문항(누적 통계에 있는 것)을 '오래전에 푼 것'으로 채운다 */
+function migrateRecent(){
+  const r = recentLog();
+  if(r.mig) return;
+  const stat = load(LS_STAT, {});
+  Object.keys(stat).forEach(id=>{ if(QBYID[id] && !r.m[id]) r.m[id] = 1; });
+  r.seq = Math.max(r.seq || 0, 1);
+  r.mig = 1; saveRecent(r);
+}
+function freshHint(){
+  const total = DATA.questions.length, seen = servedCount();
+  return `<b>순차 출제</b> — 선택한 범위의 문항이 회차·번호 순서대로 나옵니다. 중간에 '정지'를 누르면 저장되고 이어서 풀 수 있습니다. `
+    + (seen ? `지금까지 ${seen} / ${total}문항을 풀었습니다.` : ``);
+}
+
+/* ---------- 중간 저장 / 이어서 풀기 (일반·오답복습·별표복습을 각각 따로 보관) ---------- */
+function loadResumes(){
+  const raw = load(LS_RESUME, null);
+  if(!raw) return [];
+  return Array.isArray(raw) ? raw : [raw];
+}
+function saveResumes(arr){ arr.length ? save(LS_RESUME, arr) : localStorage.removeItem(LS_RESUME); }
+function resumeKey(st){ return st.fromStar ? "star" : st.fromNote ? "note" : "normal"; }
+function resumeTab(st){ return (st.fromNote || st.fromStar) ? "note" : "practice"; }
+function resumeKind(st){ return st.fromStar ? "별표 복습" : st.fromNote ? "오답 복습" : "문제 풀기"; }
+function pauseQuiz(){
+  if(!quiz) return;
+  const st = {
+    t: Date.now(),
+    ids: quiz.list.map(q=>q.id),
+    answers: quiz.answers.map(a=> a ? {pick:a.pick, ok:a.ok} : null),
+    idx: quiz.idx, fromNote: quiz.fromNote, fromStar: quiz.fromStar, seq: quiz.seq
+  };
+  const arr = loadResumes().filter(x=>resumeKey(x) !== resumeKey(st));   // 같은 종류는 최신 것으로 교체
+  arr.unshift(st);
+  saveResumes(arr);
+  document.onkeydown = null;
+  const back = resumeTab(st);
+  quiz = null;
+  toast("진행 상황을 저장했습니다");
+  goTab(back);
+}
+function resumeQuiz(key){
+  const arr = loadResumes();
+  const st = arr.find(x=>resumeKey(x) === key);
+  if(!st) return;
+  const list = st.ids.map(id=>QBYID[id]);
+  if(list.some(q=>!q)){
+    saveResumes(arr.filter(x=>x !== st));
+    toast("문항이 바뀌어 이어서 풀 수 없습니다");
+    goTab(pref.homeTab); return;
+  }
+  quiz = {list, idx: Math.min(st.idx, list.length-1), answers: st.answers.map(a=>a||null),
+          fromNote: !!st.fromNote, fromStar: !!st.fromStar, seq: st.seq || newSessionSeq()};
+  if(quiz.answers[quiz.idx]) quiz.idx = Math.min(quiz.idx+1, list.length-1);  // 이미 채점된 문항이면 다음부터
+  saveResumes(arr.filter(x=>x !== st));
+  renderQ();
+}
+function resumeCardHtml(forTab){
+  const mine = loadResumes().filter(st=>resumeTab(st) === forTab);
+  if(!mine.length) return "";
+  return `<div class="card" style="border-left:4px solid var(--acc2)">
+    <h2>이어서 풀기 <span style="color:var(--sub);font-weight:500;font-size:.8rem">${mine.length}건 저장됨</span></h2>
+    ${mine.map(st=>{
+      const answered = st.answers.filter(a=>a && a.pick).length;
+      const d = new Date(st.t);
+      return `<div class="witem">
+        <div class="info">
+          <div class="t1">${esc(resumeKind(st))}</div>
+          <div class="t2">${answered} / ${st.ids.length} 응답 ·
+            ${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")} 저장</div>
+        </div>
+        <div class="acts">
+          <button class="sm primary" data-resume="${resumeKey(st)}">이어서</button>
+          <button class="sm danger" data-dropresume="${resumeKey(st)}">삭제</button>
+        </div>
+      </div>`;
+    }).join("")}
+  </div>`;
+}
+function bindResume(){
+  app.querySelectorAll("[data-resume]").forEach(b=> b.onclick = ()=> resumeQuiz(b.dataset.resume));
+  app.querySelectorAll("[data-dropresume]").forEach(b=> b.onclick = ()=>{
+    saveResumes(loadResumes().filter(x=>resumeKey(x) !== b.dataset.dropresume));
+    goTab(pref.homeTab);
+  });
+}
+
+/* ---------- 공통 머리글 + 상단 탭 ---------- */
+const TABS = [
+  {k:"practice", label:"문제 풀이"},
+  {k:"note",     label:"복습"},
+  {k:"history",  label:"학습 기록"},
+];
+function headerHtml(){
+  return `<h1>간호조무사 기출 풀기</h1>
+  <p class="sub">간호조무사 국가시험 · ${ALL_ROUNDS.length}개 회차 ${DATA.questions.length}문항</p>`;
+}
+/* 저작권·면책 표기 — 세 탭 모두 같은 꼬리말을 쓴다.
+   문제 이미지와 정답은 국시원의 저작물이므로 우리 권리를 주장할 수 없다.
+   해설·주제 분류·앱 구성만 fadongkwon soft의 창작물이다. 이 구분을 흐리지 말 것. */
+function footerHtml(){
+  return `<p class="footer">
+    기출문제·정답: 한국보건의료인국가시험원(국시원) 간호조무사 국가시험 — 저작권은 국시원에 있으며,
+    비상업적 개인 학습 목적으로만 인용했습니다. 정답은 시험 당일 공개된 가답안 기준입니다.<br><br>
+    <b>© 2026 fadongkwon soft</b> · 해설·주제 분류·화면 구성은 fadongkwon soft가 창작한 저작물입니다.
+    무단 복제·전재·재배포 및 상업적 이용을 금합니다.<br>
+    해설은 참고용 자료로 오류가 있을 수 있습니다.</p>`;
+}
+function tabsHtml(active){
+  const reviewN = Object.keys(wrongMap()).length + Object.keys(starMap()).length;
+  return `<div class="tabs" id="homeTabs">${TABS.map(t=>
+    `<button class="${active===t.k?"on":""}" data-tab="${t.k}">${t.label}` +
+    (t.k==="note" && reviewN ? `<span class="badge">${reviewN}</span>` : "") + `</button>`).join("")}</div>`;
+}
+function bindTabs(){
+  const el = $("#homeTabs"); if(!el) return;
+  el.addEventListener("click", ev=>{
+    const b = ev.target.closest("[data-tab]"); if(!b) return;
+    goTab(b.dataset.tab);
+  });
+}
+function goTab(k){
+  pref.homeTab = TABS.some(t=>t.k===k) ? k : "practice";
+  savePref();
+  if(pref.homeTab === "note") renderNote();
+  else if(pref.homeTab === "history") renderHistory();
+  else renderHome();
+}
+
+/* ---------- home ---------- */
+function renderHome(){
+  quiz = null;
+  const p = pool();
+  const eraCounts = {};
+  DATA.questions.forEach(q=>{ if(sel.rounds.has(q.r)) eraCounts[q.subj]=(eraCounts[q.subj]||0)+1; });
+  const allEraOn = sel.eras.size === ALL_ERAS.length;
+  const allRndOn = sel.rounds.size === ALL_ROUNDS.length;
+  const [rLo, rHi] = rangeLoHi();
+
+  app.innerHTML = `
+  ${headerHtml()}
+  ${tabsHtml("practice")}
+  ${resumeCardHtml("practice")}
+
+  <div class="card">
+    <h2>과목 선택 <button class="fold" id="eraAll">${allEraOn?"전체 해제":"전체 선택"}</button></h2>
+    <div class="chips" id="eraChips">
+      ${ALL_ERAS.map(e=>`<button class="chip ${sel.eras.has(e)?"on":""}" data-era="${esc(e)}">${esc(e)}<small>${eraCounts[e]||0}</small></button>`).join("")}
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>회차 선택 <button class="fold" id="rndAll">${allRndOn?"전체 해제":"전체 선택"}</button></h2>
+    <div class="chips" id="rndChips">
+      ${ALL_ROUNDS.map(r=>`<button class="chip ${sel.rounds.has(r)?"on":""}" data-rnd="${r}">${roundLabel(r)}</button>`).join("")}
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>문항 번호 범위 <button class="fold" id="rngReset">전체 (1~100)</button></h2>
+    <div style="display:flex;align-items:center;gap:9px">
+      <input type="number" class="numin" id="rngLo" min="1" max="100" value="${rLo}">
+      <span>번 부터</span>
+      <input type="number" class="numin" id="rngHi" min="1" max="100" value="${rHi}">
+      <span>번 까지</span>
+    </div>
+    <p class="hint">과목 순서가 고정되어 있어 번호로 과목 구간을 고를 수 있습니다 — 기초간호학 1~35 · 보건간호학 36~50 · 공중보건학 51~70 · 실기 71~100.</p>
+  </div>
+
+  <button class="btn" id="startBtn" ${p.length===0?"disabled":""}>
+    문제 풀기 시작 (${p.length}문항 · 회차/번호 순)
+  </button>
+  <p class="hint">${freshHint()}</p>
+
+  ${footerHtml()}`;
+
+  bindTabs(); bindResume();
+
+  $("#eraChips").addEventListener("click", ev=>{
+    const b = ev.target.closest("[data-era]"); if(!b) return;
+    const e = b.dataset.era;
+    sel.eras.has(e) ? sel.eras.delete(e) : sel.eras.add(e);
+    savePref(); renderHome();
+  });
+  $("#eraAll").onclick = ()=>{
+    sel.eras = new Set(sel.eras.size===ALL_ERAS.length ? [] : ALL_ERAS);
+    savePref(); renderHome();
+  };
+  $("#rndChips").addEventListener("click", ev=>{
+    const b = ev.target.closest("[data-rnd]"); if(!b) return;
+    const r = b.dataset.rnd;
+    sel.rounds.has(r) ? sel.rounds.delete(r) : sel.rounds.add(r);
+    savePref(); renderHome();
+  });
+  $("#rndAll").onclick = ()=>{
+    sel.rounds = new Set(sel.rounds.size===ALL_ROUNDS.length ? [] : ALL_ROUNDS);
+    savePref(); renderHome();
+  };
+  const applyRange = ()=>{
+    sel.range = [+$("#rngLo").value || 1, +$("#rngHi").value || 100];
+    savePref(); renderHome();
+  };
+  $("#rngLo").onchange = applyRange;
+  $("#rngHi").onchange = applyRange;
+  $("#rngReset").onclick = ()=>{ sel.range = [1, 100]; savePref(); renderHome(); };
+  $("#startBtn").onclick = ()=>{
+    startQuiz(pool().sort(byRoundAndNumber), {});
+  };
+  window.scrollTo(0,0);
+}
+
+/* ---------- history ---------- */
+function renderHistory(){
+  document.onkeydown = null;
+  const hist = load(LS_HIST, []);
+  const stat = load(LS_STAT, {});
+  // cumulative per-subject accuracy
+  const eraAcc = {};
+  Object.entries(stat).forEach(([id, s])=>{
+    const q = QBYID[id]; if(!q) return;
+    const e = eraAcc[q.subj] || (eraAcc[q.subj]={r:0,w:0});
+    e.r += s.r; e.w += s.w;
+  });
+  const totR = Object.values(eraAcc).reduce((a,e)=>a+e.r,0);
+  const totW = Object.values(eraAcc).reduce((a,e)=>a+e.w,0);
+  const tot = totR + totW;
+  const eraRows = ALL_ERAS.map(e=>{
+    const s = eraAcc[e]; if(!s || s.r+s.w===0) return "";
+    const all = s.r+s.w, pct = Math.round(s.r/all*100);
+    return `<tr><td>${esc(e)}</td>
+      <td style="width:45%"><div style="background:var(--line);border-radius:4px;height:10px;overflow:hidden">
+        <div style="width:${pct}%;height:100%;background:${pct>=70?"var(--ok)":pct>=40?"var(--warn)":"var(--bad)"}"></div></div></td>
+      <td class="num">${pct}% <span style="color:var(--sub)">(${s.r}/${all})</span></td></tr>`;
+  }).join("");
+  app.innerHTML = `
+  ${headerHtml()}
+  ${tabsHtml("history")}
+  <div class="card">
+    <h2>누적 통계</h2>
+    ${tot?`
+    <div style="display:flex;gap:18px;margin-bottom:14px;text-align:center;background:var(--acc2-soft);border-radius:10px;padding:12px 8px">
+      <div style="flex:1"><div style="font-size:1.5rem;font-weight:800;color:var(--acc2)">${tot}</div><div style="font-size:.75rem;color:var(--sub)">푼 문제</div></div>
+      <div style="flex:1"><div style="font-size:1.5rem;font-weight:800;color:var(--acc2)">${Math.round(totR/tot*100)}%</div><div style="font-size:.75rem;color:var(--sub)">누적 정답률</div></div>
+      <div style="flex:1"><div style="font-size:1.5rem;font-weight:800;color:var(--acc2)">${hist.length}</div><div style="font-size:.75rem;color:var(--sub)">학습 세션</div></div>
+    </div>
+    <table class="tbl">${eraRows}</table>
+    `:`<div class="empty" style="padding:16px 0">아직 기록이 없습니다.</div>`}
+  </div>
+  <div class="card">
+    <h2>최근 세션</h2>
+    ${hist.length ? hist.slice(0,30).map(h=>{
+      const d = new Date(h.t);
+      const dt = `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+      const pct = h.n?Math.round(h.ok/h.n*100):0;
+      return `<div class="witem">
+        <div class="info">
+          <div class="t1">${h.ok} / ${h.n} 문항 <span style="color:${pct>=70?"var(--ok)":pct>=40?"var(--warn)":"var(--bad)"}">(${pct}%)</span>${h.note?' <span class="era-tag">오답복습</span>':""}</div>
+          <div class="t2">${dt} · ${(h.eras||[]).map(esc).join(", ")}${(h.eras||[]).length>=4?" 외":""}</div>
+        </div>
+      </div>`;
+    }).join("") : `<div class="empty" style="padding:16px 0">완료한 세션이 없습니다.</div>`}
+  </div>
+  ${(()=>{ const seen = servedCount(), total = DATA.questions.length;
+    return `<div class="card">
+      <h2>풀어본 범위 <span style="color:var(--sub);font-weight:500;font-size:.8rem">${seen} / ${total}문항</span></h2>
+      <div style="background:var(--line);border-radius:4px;height:10px;overflow:hidden;margin-bottom:10px">
+        <div style="width:${total?Math.round(seen/total*100):0}%;height:100%;background:var(--acc2)"></div></div>
+      <p class="hint" style="margin:0">한 번 푼 문항은 다른 문항이 한 바퀴 돌 때까지 뒤로 미뤄집니다.
+        아직 안 풀어본 문항이 <b>${total-seen}개</b> 남아 있습니다.
+        출제됐지만 답하지 않고 넘긴 문항은 여기에 포함되지 않습니다.
+        ${seen?"초기화하면 전 범위를 처음 보는 것처럼 다시 순환합니다 (오답노트·별표·학습 기록은 그대로).":""}</p>
+      ${seen?`<button class="btn ghost" id="clearRecent" style="margin-top:10px">풀어본 범위 초기화</button>`:""}
+    </div>`; })()}
+  ${(hist.length||tot)?`<button class="btn ghost" id="clearHist" style="color:var(--bad)">기록 전체 초기화</button>`:""}
+  ${footerHtml()}
+  `;
+  bindTabs();
+  const rb = $("#clearRecent");
+  if(rb) rb.onclick = ()=>{
+    if(confirm("풀어본 범위를 초기화할까요?\n\n다음 출제부터 전 범위가 '아직 안 풀어본 문항'으로 취급됩니다.\n오답노트·별표·학습 기록은 삭제되지 않습니다.")){
+      localStorage.removeItem(LS_RECENT); _recent = null; toast("풀어본 범위를 초기화했습니다"); renderHistory();
+    }
+  };
+  const cb = $("#clearHist");
+  if(cb) cb.onclick = ()=>{
+    if(confirm("학습 기록과 누적 통계를 모두 삭제할까요? (오답노트·별표·풀어본 범위는 유지됩니다)")){
+      localStorage.removeItem(LS_HIST); localStorage.removeItem(LS_STAT); renderHistory();
+    }
+  };
+  window.scrollTo(0,0);
+}
+
+/* ---------- quiz ---------- */
+function startQuiz(list, opts){
+  if(!list.length){ toast("출제할 문항이 없습니다"); return; }
+  opts = opts || {};
+  quiz = {list, idx:0, answers:[], fromNote:!!opts.fromNote, fromStar:!!opts.fromStar};
+  quiz.seq = newSessionSeq();   // 기록은 answer()에서 '답한 문항만' 남긴다
+  renderQ();
+  window.scrollTo(0,0);
+}
+
+function renderQ(){
+  const q = quiz.list[quiz.idx];
+  const total = quiz.list.length;
+  const kind = quiz.fromStar ? "별표 복습 · " : quiz.fromNote ? "오답 복습 · " : "";
+  app.innerHTML = `
+  <div class="topbar">
+    <span style="display:flex;gap:6px">
+      <button class="sm" id="quitBtn">종료</button>
+      <button class="sm" id="pauseBtn">정지</button>
+    </span>
+    <span class="meta">${kind}${quiz.idx+1} / ${total}</span>
+  </div>
+  <div class="prog"><i style="width:${(quiz.idx)/total*100}%"></i></div>
+  <div class="qbody">
+    <div class="qleft">
+      <div class="qmeta">
+        <span class="era-tag">${roundLabel(q.r)} ${q.n}번 · ${esc(q.subj)}</span>
+      </div>
+      <div class="qimgbox"><img src="${imgPath(q)}" alt="${roundLabel(q.r)} ${q.n}번 문제"></div>
+    </div>
+    <div class="qside">
+      <div class="answerrow">
+        <button class="starbtn ${isStarred(q.id)?"on":""}" id="starBtn"
+          title="잘 몰라서 찍은 문제 — 복습 탭의 별표 목록에 모입니다">${isStarred(q.id)?"★":"☆"}</button>
+        <div class="answers" id="ansBtns">
+          ${CIRCLED.map((c,i)=>`<button data-a="${i+1}">${c}</button>`).join("")}
+        </div>
+      </div>
+      <div id="feedback"></div>
+    </div>
+  </div>`;
+
+  $("#quitBtn").onclick = ()=> quiz.answers.filter(Boolean).length ? renderResult() : goTab("practice");
+  $("#pauseBtn").onclick = pauseQuiz;
+  $("#starBtn").onclick = ()=>{
+    const on = toggleStar(q.id);
+    const b = $("#starBtn");
+    b.textContent = on ? "★" : "☆";
+    b.classList.toggle("on", on);
+    toast(on ? "별표에 추가했습니다" : "별표를 해제했습니다");
+  };
+  $("#ansBtns").addEventListener("click", ev=>{
+    const b = ev.target.closest("[data-a]"); if(!b) return;
+    answer(+b.dataset.a);
+  });
+  document.onkeydown = ev=>{
+    if(!quiz) return;
+    if(["1","2","3","4","5"].includes(ev.key) && !quiz.answers[quiz.idx]) answer(+ev.key);
+    if(ev.key==="Enter" && quiz.answers[quiz.idx]) nextQ();
+  };
+  window.scrollTo(0,0);
+}
+
+function answer(pick){
+  if(quiz.answers[quiz.idx]) return;
+  const q = quiz.list[quiz.idx];
+  const ok = pick === q.ans;
+  quiz.answers[quiz.idx] = {pick, ok};
+  const btns = $("#ansBtns").querySelectorAll("button");
+  btns.forEach(b=>{
+    const a = +b.dataset.a;
+    b.disabled = true;
+    if(a===pick) b.classList.add(ok?"sel-ok":"sel-bad");
+    else if(a===q.ans) b.classList.add("reveal");
+  });
+  markServedOne(q.id, quiz.seq);   // 답한 문항만 '풀어본 것'으로 기록
+  recordStat(q, ok);
+  if(!ok) addWrong(q, pick);
+  else {
+    if(quiz.fromNote && pref.autoRemove){ removeWrong(q.id); toast("오답노트에서 제거되었습니다"); }
+    if(quiz.fromStar && pref.autoUnstar){ unstar(q.id); toast("별표가 해제되었습니다"); }
+  }
+
+  const last = quiz.idx === quiz.list.length-1;
+  $("#feedback").innerHTML = `
+    <div class="verdict ${ok?"ok":"bad"}">${ok?"⭕ 정답입니다!":"❌ 오답입니다. 정답은 "+CIRCLED[q.ans-1]}</div>
+    <div class="expl">
+      <span class="era-tag">${esc(q.subj)}</span> <b class="tp" style="display:inline">${esc(q.topic)}</b>
+      <div style="margin-top:7px">${esc(q.exp)}</div>
+    </div>
+    <button class="btn" id="nextBtn" style="margin-top:14px">${last?"결과 보기":"다음 문제"}</button>`;
+  $("#nextBtn").onclick = nextQ;
+  $("#nextBtn").focus();
+}
+
+function nextQ(){
+  if(quiz.idx < quiz.list.length-1){ quiz.idx++; renderQ(); }
+  else renderResult();
+}
+
+/* ---------- result ---------- */
+function renderResult(){
+  document.onkeydown = null;
+  const done = quiz.answers.filter(Boolean);
+  const n = done.length;
+  const okN = done.filter(a=>a.ok).length;
+  if(!quiz.saved && n > 0){
+    quiz.saved = true;
+    saveSession({t: Date.now(), n, ok: okN, note: !!quiz.fromNote,
+      eras: [...new Set(quiz.list.slice(0, quiz.answers.length).map(q=>q.subj))].slice(0,4)});
+  }
+  const eraStat = {};
+  const wrongs = [];
+  quiz.list.forEach((q,i)=>{
+    const a = quiz.answers[i]; if(!a) return;
+    const s = eraStat[q.subj] || (eraStat[q.subj]={ok:0,all:0});
+    s.all++; if(a.ok) s.ok++;
+    if(!a.ok) wrongs.push({q, pick:a.pick});
+  });
+  app.innerHTML = `
+  <h1>채점 결과</h1>
+  <div class="card">
+    <div class="score">${okN} / ${n} <small>문항</small></div>
+    <div style="text-align:center;color:var(--sub);font-size:.95rem">정답률 ${n?Math.round(okN/n*100):0}% · 합격 기준은 전 과목 총점 60% 이상, 과목별 40% 이상</div>
+  </div>
+  <div class="card">
+    <h2>과목별 성적</h2>
+    <table class="tbl"><tr><th>과목</th><th style="text-align:right">정답 / 문항</th></tr>
+    ${Object.entries(eraStat).map(([e,s])=>`<tr><td>${esc(e)}</td><td class="num">${s.ok} / ${s.all}</td></tr>`).join("")}
+    </table>
+  </div>
+  ${wrongs.length?`
+  <div class="card">
+    <h2>이번에 틀린 문제 (${wrongs.length})</h2>
+    ${wrongs.map(w=>`
+      <div class="witem">
+        <div class="info">
+          <div class="t1">${roundShort(w.q.r)} ${w.q.n}번 · ${esc(w.q.topic)}</div>
+          <div class="t2"><span class="era-tag">${esc(w.q.subj)}</span> 내 답 ${CIRCLED[w.pick-1]} → 정답 ${CIRCLED[w.q.ans-1]}</div>
+        </div>
+        <div class="acts"><button class="sm" data-view="${w.q.id}">보기</button></div>
+      </div>`).join("")}
+  </div>`:""}
+  <div class="rowbtns">
+    <button class="btn ghost" id="homeBtn">문제 풀이로</button>
+    <button class="btn" id="noteBtn">복습${wrongs.length?" 하기":""}</button>
+  </div>`;
+  app.querySelectorAll("[data-view]").forEach(b=> b.onclick = ()=> viewOne(b.dataset.view, renderResult));
+  $("#homeBtn").onclick = ()=> goTab("practice");
+  $("#noteBtn").onclick = ()=>{ noteView = wrongs.length ? "wrong" : noteView; goTab("note"); };
+  window.scrollTo(0,0);
+}
+
+/* ---------- single view ---------- */
+function viewOne(id, backFn){
+  const q = QBYID[id]; if(!q) return;
+  app.innerHTML = `
+  <div class="topbar"><button class="sm" id="backBtn">← 돌아가기</button>
+    <span class="meta">${roundLabel(q.r)} ${q.n}번</span></div>
+  <div class="qmeta">
+    <span class="era-tag">${esc(q.subj)}</span>
+    <button class="starbtn ${isStarred(q.id)?"on":""}" id="starBtn"
+      title="잘 몰라서 찍은 문제 — 복습 탭의 별표 목록에 모입니다">${isStarred(q.id)?"★":"☆"}</button>
+  </div>
+  <div class="qimgbox"><img src="${imgPath(q)}" alt="문제"></div>
+  <div class="verdict ok" style="margin-top:12px">정답: ${CIRCLED[q.ans-1]}</div>
+  <div class="expl">
+    <span class="era-tag">${esc(q.subj)}</span> <b class="tp" style="display:inline">${esc(q.topic)}</b>
+    <div style="margin-top:7px">${esc(q.exp)}</div>
+  </div>`;
+  $("#backBtn").onclick = backFn;
+  $("#starBtn").onclick = ()=>{
+    const on = toggleStar(q.id);
+    const b = $("#starBtn");
+    b.textContent = on ? "★" : "☆";
+    b.classList.toggle("on", on);
+    toast(on ? "별표에 추가했습니다" : "별표를 해제했습니다");
+  };
+  window.scrollTo(0,0);
+}
+
+/* ---------- wrong note ---------- */
+function renderNote(){
+  document.onkeydown = null;
+  const isStar = noteView === "star";
+  const m = isStar ? starMap() : wrongMap();
+  const items = Object.entries(m).map(([id,e])=>({q:QBYID[id], e})).filter(x=>x.q)
+    .sort((a,b)=> b.e.t - a.e.t);
+  const wrongN = Object.keys(wrongMap()).length;
+  const starN  = Object.keys(starMap()).length;
+  const KIND   = isStar ? "별표" : "오답";
+  // 필터가 가리키는 과목이 목록에서 사라졌으면 전체로 되돌린다
+  const hasEra = e => items.some(x=>x.q.subj === e);
+  if(noteEra !== "all" && !hasEra(noteEra)) noteEra = "all";
+  const eraCnt = {}; items.forEach(x=>{ eraCnt[x.q.subj] = (eraCnt[x.q.subj]||0)+1; });
+  const shown = items.filter(x=> noteEra === "all" || x.q.subj === noteEra);
+
+  app.innerHTML = `
+  ${headerHtml()}
+  ${tabsHtml("note")}
+  ${resumeCardHtml("note")}
+  <div class="seg" id="viewSeg" style="width:100%;margin-bottom:10px">
+    <button data-view2="wrong" class="${isStar?"":"on"}" style="flex:1">오답노트 ${wrongN}</button>
+    <button data-view2="star" class="star ${isStar?"on":""}" style="flex:1">★ 별표 ${starN}</button>
+  </div>
+  ${items.length?`
+  <div class="card" style="padding:12px 14px;margin-bottom:10px">
+    <h3 style="margin:0 0 6px">과목</h3>
+    <div class="chips" id="noteEraChips">
+      <button class="chip ${noteEra==="all"?"on":""}" data-ne="all">전체<small>${items.length}</small></button>
+      ${ALL_ERAS.filter(hasEra).map(e=>`<button class="chip ${noteEra===e?"on":""}" data-ne="${esc(e)}">${esc(e)}<small>${eraCnt[e]}</small></button>`).join("")}
+    </div>
+  </div>
+  <button class="btn" id="retryAll" ${shown.length?"":"disabled"}>${noteEra==="all"?KIND+" 전체 다시 풀기":esc(noteEra)+" "+KIND+" 다시 풀기"} (${shown.length})</button>
+  <div style="margin:10px 0 4px">
+    <label style="font-size:.82rem;color:var(--sub)">
+      <input type="checkbox" id="autoRm" ${(isStar?pref.autoUnstar:pref.autoRemove)?"checked":""}> 다시 풀어 맞히면 ${isStar?"별표":"목록에서"} 자동 해제
+    </label>
+  </div>
+  <div class="card" style="padding:6px 14px">
+    ${shown.length ? shown.map(({q,e})=>`
+      <div class="witem">
+        <div class="info">
+          <div class="t1">${roundShort(q.r)} ${q.n}번 · ${esc(q.topic)}</div>
+          <div class="t2"><span class="era-tag">${esc(q.subj)}</span> ${isStar?"별표":e.c+"회 틀림"} · ${new Date(e.t).toLocaleDateString("ko-KR")}</div>
+        </div>
+        <div class="acts">
+          <button class="sm primary" data-solve="${q.id}">풀기</button>
+          <button class="sm" data-view="${q.id}">해설</button>
+          <button class="sm danger" data-del="${q.id}">삭제</button>
+        </div>
+      </div>`).join("") : `<div class="empty" style="padding:16px 0">선택한 과목에 해당하는 ${KIND} 문항이 없습니다.</div>`}
+  </div>
+  <button class="btn ghost" id="clearNote" style="color:var(--bad)">${KIND} 목록 전체 초기화</button>
+  `:`<div class="empty">${isStar
+      ? "별표한 문항이 없습니다.<br>문제를 풀 때 문제 위 ☆ 버튼을 누르면 여기에 모입니다."
+      : "저장된 오답이 없습니다.<br>문제를 풀다 틀리면 자동으로 저장됩니다."}</div>`}
+  ${footerHtml()}
+  `;
+  bindTabs(); bindResume();
+  $("#viewSeg").addEventListener("click", ev=>{
+    const b = ev.target.closest("[data-view2]"); if(!b) return;
+    noteView = b.dataset.view2; noteEra = "all"; renderNote();
+  });
+  if(items.length){
+    $("#noteEraChips").addEventListener("click", ev=>{
+      const b = ev.target.closest("[data-ne]"); if(!b) return;
+      noteEra = b.dataset.ne; renderNote();
+    });
+    $("#retryAll").onclick = ()=>{
+      if(!shown.length) return;
+      startQuiz(shown.map(x=>x.q).sort(byRoundAndNumber), isStar ? {fromStar:true} : {fromNote:true});
+    };
+    $("#autoRm").onchange = ev=>{
+      if(isStar) pref.autoUnstar = ev.target.checked; else pref.autoRemove = ev.target.checked;
+      savePref();
+    };
+    app.querySelectorAll("[data-solve]").forEach(b=> b.onclick = ()=>
+      startQuiz([QBYID[b.dataset.solve]], isStar ? {fromStar:true} : {fromNote:true}));
+    app.querySelectorAll("[data-view]").forEach(b=> b.onclick = ()=> viewOne(b.dataset.view, renderNote));
+    app.querySelectorAll("[data-del]").forEach(b=> b.onclick = ()=>{
+      isStar ? unstar(b.dataset.del) : removeWrong(b.dataset.del);
+      renderNote();
+    });
+    $("#clearNote").onclick = ()=>{
+      if(confirm(`${KIND} 목록 ${items.length}문항을 전부 삭제할까요?\n삭제하면 되돌릴 수 없습니다. (학습 기록은 유지됩니다)`)){
+        localStorage.removeItem(isStar ? LS_STAR : LS_WRONG);
+        toast(`${KIND} 목록이 초기화되었습니다`);
+        renderNote();
+      }
+    };
+  }
+  window.scrollTo(0,0);
+}
+
+/* ---------- 버전 확인 → 구버전이면 설정·중간저장만 비우고 최신 UI로 자동 갱신 ---------- */
+function checkVersion(){
+  fetch("version.json?t=" + Date.now(), {cache:"no-store"})
+    .then(r=> r.ok ? r.json() : null)
+    .then(j=>{
+      if(!j || !j.app || j.app === APP_VERSION) return;
+      if(sessionStorage.getItem("npq_reload_for") === j.app) return;   // 무한 루프 방지
+      sessionStorage.setItem("npq_reload_for", j.app);
+      VOLATILE_KEYS.forEach(k=> localStorage.removeItem(k));   // 오답노트·별표·기록·풀어본 범위는 보존
+      location.replace(location.pathname + "?v=" + encodeURIComponent(j.app));
+    })
+    .catch(()=>{});   // 오프라인 등은 무시
+}
+
+/* ---------- boot ---------- */
+if(!DATA.questions.length){
+  app.innerHTML = `<div class="empty">문항 데이터(data.js)를 불러오지 못했습니다.</div>`;
+}else{
+  migrateRecent();
+  goTab(TABS.some(t=>t.k===pref.homeTab) ? pref.homeTab : "practice");
+  checkVersion();
+}
+</script>
+</body>
+</html>
