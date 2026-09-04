@@ -149,7 +149,7 @@ h1{font-size:1.25rem;margin:8px 0 2px}
 const $ = sel => document.querySelector(sel);
 const app = $("#app");
 const CIRCLED = ["①","②","③","④","⑤"];
-const APP_VERSION = "2026.09.05.1";
+const APP_VERSION = "2026.09.05.2";
 const LS_WRONG = "npq_wrong_v1";
 const LS_STAR  = "npq_star_v1";    // 별표(잘 몰라서 찍은 문제) — 오답과 별개로 보관
 const LS_PREF  = "npq_pref_v1";
@@ -566,13 +566,18 @@ function renderQ(){
   const q = quiz.list[quiz.idx];
   const total = quiz.list.length;
   const kind = quiz.fromStar ? "별표 복습 · " : quiz.fromNote ? "오답 복습 · " : "";
+  const last = quiz.idx === total-1;
   app.innerHTML = `
   <div class="topbar">
     <span style="display:flex;gap:6px">
       <button class="sm" id="quitBtn">종료</button>
       <button class="sm" id="pauseBtn">정지</button>
     </span>
-    <span class="meta">${kind}${quiz.idx+1} / ${total}</span>
+    <span style="display:flex;gap:6px;align-items:center">
+      <span class="meta">${kind}${quiz.idx+1} / ${total}</span>
+      <button class="sm" id="prevBtn" ${quiz.idx===0?"disabled":""} title="이전 문제 (←)">◀</button>
+      <button class="sm" id="skipBtn" title="${last?"결과 보기":"안 풀고 다음 문제로 (→)"}">${last?"결과":"▶"}</button>
+    </span>
   </div>
   <div class="prog"><i style="width:${(quiz.idx)/total*100}%"></i></div>
   <div class="qbody">
@@ -607,11 +612,18 @@ function renderQ(){
     const b = ev.target.closest("[data-a]"); if(!b) return;
     answer(+b.dataset.a);
   });
+  /* 이전/다음 이동 — 안 풀고 넘길 수 있다. 넘긴 문항은 답하지 않았으므로 '풀어본 범위'에 기록되지 않고,
+     결과 화면도 답한 문항만 집계한다. 뒤로 돌아온 문항이 이미 채점돼 있으면 채점 상태를 그대로 복원한다. */
+  $("#prevBtn").onclick = prevQ;
+  $("#skipBtn").onclick = nextQ;
   document.onkeydown = ev=>{
     if(!quiz) return;
     if(["1","2","3","4","5"].includes(ev.key) && !quiz.answers[quiz.idx]) answer(+ev.key);
     if(ev.key==="Enter" && quiz.answers[quiz.idx]) nextQ();
+    if(ev.key==="ArrowRight") nextQ();
+    if(ev.key==="ArrowLeft") prevQ();
   };
+  if(quiz.answers[quiz.idx]) showFeedback(q, quiz.answers[quiz.idx]);
   window.scrollTo(0,0);
 }
 
@@ -620,13 +632,6 @@ function answer(pick){
   const q = quiz.list[quiz.idx];
   const ok = pick === q.ans;
   quiz.answers[quiz.idx] = {pick, ok};
-  const btns = $("#ansBtns").querySelectorAll("button");
-  btns.forEach(b=>{
-    const a = +b.dataset.a;
-    b.disabled = true;
-    if(a===pick) b.classList.add(ok?"sel-ok":"sel-bad");
-    else if(a===q.ans) b.classList.add("reveal");
-  });
   markServedOne(q.id, quiz.seq);   // 답한 문항만 '풀어본 것'으로 기록
   recordStat(q, ok);
   if(!ok) addWrong(q, pick);
@@ -634,7 +639,19 @@ function answer(pick){
     if(quiz.fromNote && pref.autoRemove){ removeWrong(q.id); toast("오답노트에서 제거되었습니다"); }
     if(quiz.fromStar && pref.autoUnstar){ unstar(q.id); toast("별표가 해제되었습니다"); }
   }
+  showFeedback(q, {pick, ok});
+  $("#nextBtn").focus();
+}
 
+/* 채점 결과 표시 — 답한 직후와 이전 문항으로 되돌아왔을 때 같은 함수로 그린다 */
+function showFeedback(q, a){
+  const {pick, ok} = a;
+  $("#ansBtns").querySelectorAll("button").forEach(b=>{
+    const n = +b.dataset.a;
+    b.disabled = true;
+    if(n===pick) b.classList.add(ok?"sel-ok":"sel-bad");
+    else if(n===q.ans) b.classList.add("reveal");
+  });
   const last = quiz.idx === quiz.list.length-1;
   $("#feedback").innerHTML = `
     <div class="verdict ${ok?"ok":"bad"}">${ok?"⭕ 정답입니다!":"❌ 오답입니다. 정답은 "+CIRCLED[q.ans-1]}</div>
@@ -644,12 +661,15 @@ function answer(pick){
     </div>
     <button class="btn" id="nextBtn" style="margin-top:14px">${last?"결과 보기":"다음 문제"}</button>`;
   $("#nextBtn").onclick = nextQ;
-  $("#nextBtn").focus();
 }
 
 function nextQ(){
   if(quiz.idx < quiz.list.length-1){ quiz.idx++; renderQ(); }
-  else renderResult();
+  else if(quiz.answers.filter(Boolean).length) renderResult();
+  else toast("아직 답한 문항이 없습니다");
+}
+function prevQ(){
+  if(quiz.idx > 0){ quiz.idx--; renderQ(); }
 }
 
 /* ---------- result ---------- */
